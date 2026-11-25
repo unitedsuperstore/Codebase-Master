@@ -30,27 +30,12 @@ HANDOFF_SECTIONS = (
     "Commands and checks",
     "Handoff prompt",
 )
-PLACEHOLDER_PATTERNS = (
-    r"\[TODO\b",
-    r"\[date\]",
-    r"\[name,\s*branch,\s*short commit\]",
-    r"\[paths and flows inspected",
-    r"\[Describe major components",
-    r"\[entry point\]",
-    r"\[modules/services\]",
-    r"\[data or result\]",
-    r"\[environment variable names",
-    r"\[Security, reliability",
-    r"\[What was inspected",
-    r"\[What the project is intended",
-    r"\[Current git status",
-    r"\[Smallest safe, high-value next action",
-    r"\[passed / failed / not run\]",
-    r"\[specific next step\]",
+PLACEHOLDER_RE = re.compile(
+    r"\[(?=[^\]\n]*[A-Za-z])[^\]\n]{1,100}\](?!\()", re.IGNORECASE
 )
-PLACEHOLDER_RE = re.compile("|".join(PLACEHOLDER_PATTERNS), re.IGNORECASE)
 HEADING_RE = re.compile(r"^#{1,6}\s+(.+?)\s*#*\s*$", re.MULTILINE)
 LINK_RE = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
+FENCED_CODE_RE = re.compile(r"```.*?```", re.DOTALL)
 
 
 def _check_document(
@@ -72,7 +57,8 @@ def _check_document(
         if section.casefold() not in headings:
             errors.append(f"{relative_path}: missing section '## {section}'")
 
-    match = PLACEHOLDER_RE.search(text)
+    placeholder_text = FENCED_CODE_RE.sub("", text)
+    match = PLACEHOLDER_RE.search(placeholder_text)
     if match:
         errors.append(
             f"{relative_path}: unresolved template placeholder near {match.group(0)!r}"

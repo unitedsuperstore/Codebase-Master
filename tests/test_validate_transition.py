@@ -83,6 +83,35 @@ class TransitionValidationTests(unittest.TestCase):
         self.assertTrue(any("missing section" in error for error in errors))
         self.assertTrue(any("unresolved template placeholder" in error for error in errors))
 
+    def test_detects_custom_architecture_placeholders(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            architecture_map = VALID_MAP.replace("A module.", "A module with [runtime boundary].")
+            (root / "CODEBASE_MAP.md").write_text(architecture_map, encoding="utf-8")
+            (root / "AI_HANDOFF.md").write_text(VALID_HANDOFF, encoding="utf-8")
+            errors, _ = validate_transition_docs(root)
+        self.assertTrue(any("unresolved template placeholder" in error for error in errors))
+
+    def test_does_not_treat_markdown_link_labels_as_placeholders(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "src").mkdir()
+            (root / "src/app.py").write_text("print('ok')\n", encoding="utf-8")
+            architecture_map = VALID_MAP.replace("A module.", "A module; see [application entry](src/app.py).")
+            (root / "CODEBASE_MAP.md").write_text(architecture_map, encoding="utf-8")
+            (root / "AI_HANDOFF.md").write_text(VALID_HANDOFF, encoding="utf-8")
+            errors, _ = validate_transition_docs(root)
+        self.assertEqual(errors, [])
+
+    def test_does_not_treat_mermaid_labels_as_placeholders(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            architecture_map = VALID_MAP + "\n```mermaid\nflowchart LR\n    User[Python caller] --> Store[TaskStore]\n```\n"
+            (root / "CODEBASE_MAP.md").write_text(architecture_map, encoding="utf-8")
+            (root / "AI_HANDOFF.md").write_text(VALID_HANDOFF, encoding="utf-8")
+            errors, _ = validate_transition_docs(root)
+        self.assertEqual(errors, [])
+
     def test_finds_broken_local_links(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

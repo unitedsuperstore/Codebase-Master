@@ -13,6 +13,7 @@ Codebase-Master guides an AI agent to establish the real state of a project befo
 When preparing a handoff, the agent adapts the included templates to create two Markdown documents in the **target software project**:
 
 - **`CODEBASE_MAP.md`** — durable architecture and repository context: key packages and files, data flows, integrations, development commands, tests, risks, and inspection limits.
+- For a deeper system view, use [`templates/SOFTWARE_ARCHITECTURE_MAP.template.md`](./templates/SOFTWARE_ARCHITECTURE_MAP.template.md) as the `CODEBASE_MAP.md` source. It adds component, runtime/deployment, data-lifecycle, security-boundary, integration, and operations detail while retaining the validator-required sections.
 - **`AI_HANDOFF.md`** — time-sensitive continuation context: verified completed/in-progress work, blockers, current Git state, next steps, check results, and a ready-to-paste prompt for the next agent.
 
 These files describe the project being handed off; they are not generated in this skill repository by default.
@@ -23,7 +24,7 @@ These files describe the project being handed off; they are not generated in thi
 2. Make this repository's `SKILL.md`, templates, and playbook available. Install/register the skill using the receiving agent's documented method, or provide the Markdown files as context and ask the agent to follow them.
 3. Ask the outgoing agent to map and prepare the handoff. For example:
 
-   > Use Codebase-Master to map this repository and prepare a handoff for another AI coding agent. Inspect the current Git state first, preserve all work, verify important claims from code and tests, and create `CODEBASE_MAP.md` and `AI_HANDOFF.md` in the repository root. Do not start unrelated implementation.
+   > Use Codebase-Master to map this repository and prepare a handoff for another AI coding agent. Inspect the current Git state first, preserve all work, verify important claims from code and tests, and create `CODEBASE_MAP.md` and `AI_HANDOFF.md` in the repository root. Use the detailed software architecture map template if the system has multiple components or important runtime/data boundaries. Do not start unrelated implementation.
 
 4. Review the generated documents, especially Git state, unresolved questions, commands not run, and inspection limits.
 5. Give the receiving agent the same project state, both handoff documents, applicable project instructions, and the current user request. Ask it to verify the relevant facts before editing.
@@ -34,7 +35,7 @@ A handoff can happen at any point. “More than halfway complete” may be a rem
 
 ## Optional GitHub Actions transition gate
 
-This repository includes a read-only workflow at [`.github/workflows/codebase-transition.yml`](./.github/workflows/codebase-transition.yml). It runs on manual dispatch and on push/pull-request changes to the transition documents or validator configuration. For another project, copy the workflow, [`scripts/validate_transition.py`](./scripts/validate_transition.py), and the configuration template to the target repository, then review and customize them before enabling the checks.
+This repository includes a read-only workflow at [`.github/workflows/codebase-transition.yml`](./.github/workflows/codebase-transition.yml). It runs on manual dispatch and on push/pull-request changes to the transition documents, templates, or validator configuration. For another project, copy the workflow, [`scripts/validate_transition.py`](./scripts/validate_transition.py), and the configuration template to the target repository, then review and customize them before enabling the checks.
 
 The validator checks that both transition documents are present together, required headings are included, template placeholders have been replaced, and relative Markdown links resolve. The workflow then runs the argument-array commands listed in [`.github/codebase-master-checks.json`](./.github/codebase-master-checks.json). Configure the target project’s commands in that JSON file, for example:
 
@@ -51,6 +52,8 @@ The validator checks that both transition documents are present together, requir
 ```
 
 Use commands that are appropriate for the target project and available in its CI environment. The runner executes argument arrays without a shell. Review commands before adding them: tests execute repository code, so keep GitHub Actions permissions minimal and do not expose secrets to untrusted pull requests. The included workflow uses `contents: read` and no API/LLM credentials.
+
+When validation or a configured health check fails, the workflow emits a GitHub error annotation and writes a failure summary with a direct run link. GitHub inbox/email delivery depends on each user's repository watch and Actions notification settings; no external email, Slack, or webhook destination is configured.
 
 Run locally with:
 
@@ -85,6 +88,7 @@ If neither handoff document exists, the validator warns and skips document valid
 |---|---|
 | [`SKILL.md`](./SKILL.md) | Core Codebase-Master workflow and safety instructions |
 | [`templates/CODEBASE_MAP.template.md`](./templates/CODEBASE_MAP.template.md) | Starting structure for a project architecture map |
+| [`templates/SOFTWARE_ARCHITECTURE_MAP.template.md`](./templates/SOFTWARE_ARCHITECTURE_MAP.template.md) | Detailed software architecture map with component, deployment, data, security, and operations sections |
 | [`templates/AI_HANDOFF.template.md`](./templates/AI_HANDOFF.template.md) | Starting structure for an agent-to-agent handoff |
 | [`templates/CLAUDE_CODE_PROMPT.template.md`](./templates/CLAUDE_CODE_PROMPT.template.md) | Claude Code receiving-agent prompt template |
 | [`templates/workflows/codebase-transition.yml`](./templates/workflows/codebase-transition.yml) | Reusable Actions workflow template |

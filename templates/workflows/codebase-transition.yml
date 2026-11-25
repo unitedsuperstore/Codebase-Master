@@ -10,6 +10,8 @@ on:
       - ".github/workflows/codebase-transition.yml"
       - "scripts/validate_transition.py"
       - "tests/**"
+      - "templates/**"
+      - "skills/codebase-transition-kit/**"
   push:
     branches: [main]
     paths:
@@ -19,6 +21,8 @@ on:
       - ".github/workflows/codebase-transition.yml"
       - "scripts/validate_transition.py"
       - "tests/**"
+      - "templates/**"
+      - "skills/codebase-transition-kit/**"
 
 permissions:
   contents: read
@@ -38,3 +42,17 @@ jobs:
 
       - name: Validate transition documents and run configured checks
         run: python3 scripts/validate_transition.py --run-health-checks --checks-config .github/codebase-master-checks.json
+
+      - name: Alert on failed transition checks
+        if: failure()
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          echo "::error title=Codebase transition checks failed::Review the failed validation and configured health-check logs."
+          {
+            echo "## Codebase transition checks failed"
+            echo
+            echo "The architecture-map/handoff validation or a configured project health check failed."
+            echo "Review the [GitHub Actions run](${RUN_URL}) for the failing command and logs."
+            echo "GitHub email/inbox delivery follows each user's repository and Actions notification settings."
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -18,7 +18,7 @@ Scaffold a portable agent-handoff setup in an existing software repository. Use 
 
 ### 2. Add transition documents
 
-Use `templates/CODEBASE_MAP.template.md` and `templates/AI_HANDOFF.template.md` to create project-root documents when the user asks for a handoff. Inspect the code and current Git state; do not fill them from assumptions alone. Record coverage and limitations. Keep environment-variable names only, never secret values. If documents already exist, update minimally or ask before replacing.
+Use `templates/CODEBASE_MAP.template.md` and `templates/AI_HANDOFF.template.md` to create project-root documents when the user asks for a handoff. For a multi-component system or important runtime, deployment, data, security, or operational boundaries, use `templates/SOFTWARE_ARCHITECTURE_MAP.template.md` as the `CODEBASE_MAP.md` source; it retains the headings required by the validator. Inspect the code and current Git state; do not fill the templates from assumptions alone. Record coverage and limitations. Keep environment-variable names only, never secret values. If documents already exist, update minimally or ask before replacing.
 
 ### 3. Add the optional GitHub Actions transition gate
 
@@ -28,9 +28,11 @@ Copy and adapt:
 - `scripts/validate_transition.py` → `scripts/validate_transition.py`
 - `templates/codebase-master-checks.json` → `.github/codebase-master-checks.json`
 
-The workflow is intended to run on changes to `CODEBASE_MAP.md` or `AI_HANDOFF.md` and on manual dispatch. The validator checks the expected sections, unresolved template placeholders, and relative local links. It runs health commands only from the JSON `checks` list, where each command is an argument array (not a shell string).
+The workflow is intended to run on changes to `CODEBASE_MAP.md`, `AI_HANDOFF.md`, templates, and on manual dispatch. The validator checks the expected sections, unresolved template placeholders, and relative local links. It runs health commands only from the JSON `checks` list, where each command is an argument array (not a shell string).
 
 Review and configure every project-specific command before enabling it. Existing dependencies and test setup may require a project-specific workflow. Never add secrets to this workflow; use least-privilege `contents: read`. Do not use `pull_request_target` to run untrusted pull-request code. A green workflow confirms only the checks it ran and document structure; it does not create or semantically verify an architecture map. Report an empty health-check list as “health checks not configured,” not as passed.
+
+On failure, the bundled workflow emits an Actions error annotation and writes a summary with a direct run link. GitHub inbox/email delivery follows each user's notification settings; do not configure an external webhook or email without a supplied destination and authorization.
 
 ### 4. Add Claude Code guidance
 
@@ -46,7 +48,7 @@ Update the repository README and transition playbook with:
 - What the workflow cannot verify and when an agent must inspect manually.
 - How to pass the Claude Code prompt and handoff documents to the receiving agent.
 
-Run `python3 -m unittest discover -s tests -v` if tests are bundled, run the validator against a representative temporary fixture, check JSON/YAML syntax and Markdown local links, inspect staged diffs, and record checks accurately. Do not claim an action has run on GitHub unless a workflow run is observed.
+Run `python3 -m unittest discover -s tests -v` if tests are bundled, run the validator against a representative temporary fixture, check JSON/YAML syntax and Markdown local links, inspect staged diffs, and record checks accurately. Simulate receiving-agent verification by independently checking the sample handoff's working-tree state and rerunning relevant tests. Do not claim an action has run on GitHub unless a workflow run is observed.
 
 ### 6. Publish only when requested
 
@@ -55,7 +57,8 @@ If the user asks to publish, use the session's authorized GitHub integration and
 ## Bundled resources
 
 - `templates/CODEBASE_MAP.template.md` and `templates/AI_HANDOFF.template.md`: project handoff artifacts.
-- `templates/codebase-transition.yml`: workflow to validate transition documents and run configured health checks.
+- `templates/SOFTWARE_ARCHITECTURE_MAP.template.md`: expanded software architecture map for multi-component systems and critical runtime/data boundaries.
+- `templates/codebase-transition.yml`: workflow to validate transition documents and run configured health checks, with a GitHub-native failure annotation and run summary.
 - `templates/codebase-master-checks.json`: project-check configuration example; adapt it to real commands.
 - `templates/CLAUDE_CODE_PROMPT.template.md`: Claude Code receiving-agent prompt/config template.
 - `scripts/validate_transition.py`: dependency-free structural and link validator plus safe argument-array command runner.

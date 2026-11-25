@@ -46,6 +46,8 @@ When preparing a handoff, adapt the bundled templates:
 - `templates/CODEBASE_MAP.template.md` → project-root `CODEBASE_MAP.md` for architecture, module/file map, key flows, data/integrations, commands, tests, risks, and coverage limits.
 - `templates/AI_HANDOFF.template.md` → project-root `AI_HANDOFF.md` for current status, Git state, blockers, next steps, check results, and a ready-to-paste next-agent prompt.
 
+For a multi-component software system or important runtime, deployment, data, security, or operational boundaries, use `templates/SOFTWARE_ARCHITECTURE_MAP.template.md` as the detailed `CODEBASE_MAP.md` source. It preserves the validator-required top-level sections.
+
 Keep `AI_HANDOFF.md` concise and time-sensitive; keep durable architecture in `CODEBASE_MAP.md`. Cite important claims with paths and evidence. Check if target documents exist before writing. Preserve existing content; if replacement or merging is unclear, ask. Do not add map/handoff content to agent instruction files unless requested.
 
 ### 5. Optional transition automation and Claude Code prompt
@@ -72,3 +74,5 @@ Re-read generated files and check links, paths, commands, contradictions, and un
 - Preserve existing instructions and working-tree changes.
 - Make the result useful to Codex, Claude Code, and other AI coding agents.
 - Never claim tests passed when they were not run, or full code review when inspection was selective.
+
+On failure, the bundled workflow emits a GitHub Actions error annotation and adds a run-linked summary. Inbox/email notification delivery depends on each user's GitHub notification settings; do not add an external webhook or email destination unless the user supplies and authorizes it.
